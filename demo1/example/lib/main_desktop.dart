@@ -117,8 +117,8 @@ class _MyAppState extends State<MyApp> {
       print('**DART1 streamCompareFaceController ${faces.length}');
       fpsDlib++;
       if (faces.isNotEmpty && faces[0].face.isNotEmpty) {
-        _faceImage.value = List.generate(faces.length, (index) => 
-            faces[index].face);
+        _faceImage.value =
+            List.generate(faces.length, (index) => faces[index].face);
         List<int> points = [];
         for (var element in faces) {
           points.addAll(element.rectPoints);
@@ -265,8 +265,6 @@ class _MyAppState extends State<MyApp> {
                         ),
                       );
                     }),
-
-
               ],
             ),
 
@@ -359,7 +357,6 @@ class _MyAppState extends State<MyApp> {
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-
                       // * START/STOP dlib
                       OutlinedButton(
                         child: Text(startGrab ? 'Stop DLib' : 'Start DLib'),
@@ -380,26 +377,34 @@ class _MyAppState extends State<MyApp> {
                             ticker.start();
 
                             /// Timer to modify fps text
-                            timer = Timer.periodic(const Duration(milliseconds: 1000),
-                                    (timer) {
-                                  _textDlib.value = fpsDlib.toString();
+                            timer = Timer.periodic(
+                                const Duration(milliseconds: 1000), (timer) {
+                              _textDlib.value = fpsDlib.toString();
 
-                                  // To see what dlib will process
-                                  CameraFrame frame =
-                                    OpenCVCamera().getRAWOpenCVCameraFrame();
-                                  if (_isDetectMode.value) {
-                                    DetectorInterface()
-                                        .getAdjustedSource(frame.width, frame.height,
-                                        frame.bytesPerPixel, frame.bytes)
-                                        .then((value) => _adjustedImg.value = value);
-                                  } else {
-                                    RecognizerInterface()
-                                        .getAdjustedSource(frame.width, frame.height,
-                                        frame.bytesPerPixel, frame.bytes)
-                                        .then((value) => _adjustedImg.value = value);
-                                  }
-                                  fpsDlib = 0;
-                                });
+                              // To see what dlib will process
+                              CameraFrame frame =
+                                  OpenCVCamera().getRAWOpenCVCameraFrame();
+                              if (_isDetectMode.value) {
+                                DetectorInterface()
+                                    .getAdjustedSource(
+                                        frame.width,
+                                        frame.height,
+                                        frame.bytesPerPixel,
+                                        frame.bytes)
+                                    .then(
+                                        (value) => _adjustedImg.value = value);
+                              } else {
+                                RecognizerInterface()
+                                    .getAdjustedSource(
+                                        frame.width,
+                                        frame.height,
+                                        frame.bytesPerPixel,
+                                        frame.bytes)
+                                    .then(
+                                        (value) => _adjustedImg.value = value);
+                              }
+                              fpsDlib = 0;
+                            });
                           }
                           if (mounted) setState(() {});
                         },
@@ -451,76 +456,75 @@ class _MyAppState extends State<MyApp> {
                         child: const Text('recognizer'),
                       ),
 
+                      const SizedBox(width: 50),
 
-            const SizedBox(width: 50),
+                      // * Detect mode: Landmark points / rectangle
+                      ValueListenableBuilder<bool>(
+                          valueListenable: _isDetectMode,
+                          builder: (_, isDetectMode, __) {
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (isDetectMode)
+                                  ValueListenableBuilder<bool>(
+                                      valueListenable: _getFacePoints,
+                                      builder: (_, getFacePoints, __) {
+                                        return OutlinedButton.icon(
+                                          label: Text(getFacePoints
+                                              ? 'landmaks'
+                                              : 'rectangle'),
+                                          icon: Icon(getFacePoints
+                                              ? Icons.face
+                                              : Icons.crop_square),
+                                          onPressed: () {
+                                            _getFacePoints.value =
+                                                !_getFacePoints.value;
+                                            DetectorInterface()
+                                                .setGetOnlyRectangle(
+                                                    _getFacePoints.value);
+                                          },
+                                        );
+                                      }),
+                                if (!isDetectMode)
+                                  Row(
+                                    children: [
+                                      OutlinedButton.icon(
+                                        label: const Text('add face'),
+                                        icon: const Icon(Icons.face),
+                                        onPressed: () {
+                                          tryToAddFace = true;
+                                        },
+                                      ),
 
+                                      const SizedBox(width: 30),
 
-            // * Detect mode: Landmark points / rectangle
-            ValueListenableBuilder<bool>(
-                valueListenable: _isDetectMode,
-                builder: (_, isDetectMode, __) {
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (isDetectMode)
-                        ValueListenableBuilder<bool>(
-                            valueListenable: _getFacePoints,
-                            builder: (_, getFacePoints, __) {
-                              return OutlinedButton.icon(
-                                label: Text(
-                                    getFacePoints ? 'landmaks' : 'rectangle'),
-                                icon: Icon(getFacePoints
-                                    ? Icons.face
-                                    : Icons.crop_square),
-                                onPressed: () {
-                                  _getFacePoints.value = !_getFacePoints.value;
-                                  DetectorInterface().setGetOnlyRectangle(
-                                      _getFacePoints.value);
-                                },
-                              );
-                            }),
-                      if (!isDetectMode)
-                        Row(
-                          children: [
-                            OutlinedButton.icon(
-                              label: const Text('add face'),
-                              icon: const Icon(Icons.face),
-                              onPressed: () {
-                                tryToAddFace = true;
-                              },
-                            ),
-
-                            const SizedBox(width: 30),
-
-                            // * face image added
-                            if (!isDetectMode)
-                              ValueListenableBuilder<List<Uint8List>>(
-                                  valueListenable: _faceImage,
-                                  builder: (_, recognizedFaceImages, __) {
-                                    if (recognizedFaceImages.isEmpty) {
-                                      return Container();
-                                    }
-                                    return Row(
-                                      children: 
-                                        List.generate(recognizedFaceImages.length, 
-                                          (index) => Image.memory(
-                                            recognizedFaceImages[index],
-                                            width: 100,
-                                            gaplessPlayback: true,
-                                          )
-                                      )
-                                    );
-                                  }
-                              ),
-
-                                    
-                          ],
-                        ),
-                    ],
-                  );
-                }),
-
-
+                                      // * face image added
+                                      if (!isDetectMode)
+                                        ValueListenableBuilder<List<Uint8List>>(
+                                            valueListenable: _faceImage,
+                                            builder:
+                                                (_, recognizedFaceImages, __) {
+                                              if (recognizedFaceImages
+                                                  .isEmpty) {
+                                                return Container();
+                                              }
+                                              return Row(
+                                                  children: List.generate(
+                                                      recognizedFaceImages
+                                                          .length,
+                                                      (index) => Image.memory(
+                                                            recognizedFaceImages[
+                                                                index],
+                                                            width: 100,
+                                                            gaplessPlayback:
+                                                                true,
+                                                          )));
+                                            }),
+                                    ],
+                                  ),
+                              ],
+                            );
+                          }),
                     ],
                   );
                 }),
